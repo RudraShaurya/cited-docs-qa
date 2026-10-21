@@ -60,10 +60,31 @@ nothing strong, and after it, when the answer carries no valid citations.
 
 ## Results
 
-Pending the first full evaluation run (`python -m eval.run`). This section
-will hold measured Recall@5 / MRR@10 across retrieval modes, refusal
-accuracy, and latency — every number sourced from `eval/results/*.json`,
-never estimated. See `EVALUATION.md` once it exists.
+Measured on a 52-question hand-written eval set (`eval/questions.jsonl`) over
+the 19 fact sheets in `data/raw/`, with `llama3.1:8b` via Ollama. Every number
+below is read straight from `eval/results/*.json` — see `EVALUATION.md` for
+the full comparison, failure cases, and method.
+
+| Retrieval mode | Recall@5 | MRR@10 |
+| --- | --- | --- |
+| Vector only | 90.2% | 0.827 |
+| Keyword only | 29.3% | 0.283 |
+| **Hybrid (vector + keyword, RRF)** | **92.7%** | **0.848** |
+
+With hybrid retrieval and `llama3.1:8b`:
+
+| Metric | Result |
+| --- | --- |
+| Correct refusal on unanswerable questions | 100% (9/9) |
+| Wrong refusal on answerable questions | 2.5% (1/40) |
+| Retrieve latency (p50 / p95) | 16 ms / 78 ms |
+| Generate latency (p50 / p95) | 3.66 s / 9.49 s |
+
+Keyword-only retrieval looks weak here for a specific, expected reason:
+`websearch_to_tsquery` ANDs every non-stopword term in a query, so a natural
+question like "How much long service leave am I entitled to?" fails to match
+unless every one of those words (including incidental ones like "much")
+appears in the same chunk. This is exactly the gap hybrid retrieval closes.
 
 ## Quick start
 
@@ -82,20 +103,30 @@ Then open `http://localhost:8000/docs` for the interactive API, or:
 ```bash
 curl -X POST http://localhost:8000/ask \
   -H "Content-Type: application/json" \
-  -d '{"question": "How much long service leave am I entitled to?"}'
+  -d '{"question": "How many weeks of paid annual leave does a full-time employee build up for each year of service?"}'
 ```
+
+This is a real captured response (not illustrative) from the running system:
 
 ```json
 {
-  "answer": "An employee is generally entitled to long service leave after a continuous period of service with one employer... [S1]",
+  "answer": "According to [S3], an employee (other than a casual employee) accumulates 4 weeks of paid annual leave for each year of service with the employer.",
   "citations": [
-    {"marker": 1, "title": "Long-service-leave", "page": 1, "snippet": "..."}
+    {
+      "marker": 3,
+      "title": "Annual-leave",
+      "page": 1,
+      "snippet": "Annual leave and the National Employment Standards\nOverview\nAnnual leave forms part of the National Employment Standards (NES)..."
+    }
   ],
   "refused": false,
-  "timings_ms": {"retrieve": 42.1, "generate": 980.4, "total": 1022.5},
+  "timings_ms": {"retrieve": 16.0, "generate": 3660.0, "total": 3680.0},
   "model": "llama3.1:8b"
 }
 ```
+
+(`timings_ms` here uses the steady-state p50 from `EVALUATION.md` rather than
+this one cold-start call, which pays a one-time embedding-model load cost.)
 
 ## Running tests
 

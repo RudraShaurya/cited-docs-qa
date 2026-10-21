@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import psycopg
 from pgvector.psycopg import register_vector
 from psycopg_pool import ConnectionPool
 
@@ -11,7 +12,12 @@ _pool: ConnectionPool | None = None
 
 
 def _configure(conn) -> None:
-    conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+    try:
+        conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+        conn.commit()
+    except psycopg.errors.UniqueViolation:
+        # Benign race: another pool connection created the extension first.
+        conn.rollback()
     register_vector(conn)
 
 

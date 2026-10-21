@@ -36,7 +36,10 @@ def load_questions(path: Path = QUESTIONS_PATH) -> list[dict]:
 
 
 def _matches_gold(chunk: dict, gold_item: dict) -> bool:
-    return chunk.get("title") == gold_item.get("title") and chunk.get("page") == gold_item.get("page")
+    return (
+        chunk.get("title") == gold_item.get("title")
+        and chunk.get("page") == gold_item.get("page")
+    )
 
 
 def retrieval_metrics(questions: list[dict], mode: str, k: int = 5, mrr_k: int = 10) -> dict:
@@ -85,6 +88,9 @@ def refusal_and_latency_metrics(questions: list[dict], mode: str) -> dict:
     wrong_refusals = 0
     retrieve_ms, generate_ms, total_ms = [], [], []
 
+    total_calls = len(unanswerable) + len(answerable)
+    done = 0
+
     for q in unanswerable:
         result = answer_question(q["question"], llm, mode=mode)
         if result.refused:
@@ -92,6 +98,11 @@ def refusal_and_latency_metrics(questions: list[dict], mode: str) -> dict:
         retrieve_ms.append(result.timings_ms.get("retrieve", 0.0))
         generate_ms.append(result.timings_ms.get("generate", 0.0))
         total_ms.append(result.timings_ms.get("total", 0.0))
+        done += 1
+        print(
+            f"[{done}/{total_calls}] {q['id']} (unanswerable, refused={result.refused})",
+            flush=True,
+        )
 
     for q in answerable:
         result = answer_question(q["question"], llm, mode=mode)
@@ -100,6 +111,11 @@ def refusal_and_latency_metrics(questions: list[dict], mode: str) -> dict:
         retrieve_ms.append(result.timings_ms.get("retrieve", 0.0))
         generate_ms.append(result.timings_ms.get("generate", 0.0))
         total_ms.append(result.timings_ms.get("total", 0.0))
+        done += 1
+        print(
+            f"[{done}/{total_calls}] {q['id']} (answerable, refused={result.refused})",
+            flush=True,
+        )
 
     def pct(values: list[float], p: float) -> float | None:
         if not values:

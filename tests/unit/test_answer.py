@@ -1,5 +1,9 @@
 import app.answer as answer_module
-from app.answer import REFUSAL_MESSAGE, parse_and_validate_citations, should_refuse_before_generation
+from app.answer import (
+    REFUSAL_MESSAGE,
+    parse_and_validate_citations,
+    should_refuse_before_generation,
+)
 from app.llm.base import FakeLLM
 
 
@@ -18,7 +22,10 @@ def make_chunk(chunk_id=1, document_id="doc-1", title="Fact Sheet", page=2,
 
 
 def test_citation_parsing_extracts_valid_markers():
-    chunks = [make_chunk(chunk_id=1, text="Chunk one text."), make_chunk(chunk_id=2, text="Chunk two text.")]
+    chunks = [
+        make_chunk(chunk_id=1, text="Chunk one text."),
+        make_chunk(chunk_id=2, text="Chunk two text."),
+    ]
     answer = "Something is true [S1]. Something else is also true [S2]."
 
     citations, refused = parse_and_validate_citations(answer, chunks)

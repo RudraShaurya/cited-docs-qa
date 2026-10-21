@@ -5,11 +5,11 @@ _SELECT = """
     SELECT
         c.id, c.document_id, c.page, c.section, c.text,
         d.title, d.source_url,
-        c.embedding <=> %(q)s AS distance
+        c.embedding <=> %(q)s::vector AS distance
     FROM chunks c
     JOIN documents d ON d.id = c.document_id
     WHERE c.embedding IS NOT NULL
-    ORDER BY c.embedding <=> %(q)s
+    ORDER BY c.embedding <=> %(q)s::vector
     LIMIT %(k)s
 """
 
