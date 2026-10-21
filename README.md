@@ -132,6 +132,17 @@ This is a real captured response (not illustrative) from the running system:
 (`timings_ms` here uses the steady-state p50 from `EVALUATION.md` rather than
 this one cold-start call, which pays a one-time embedding-model load cost.)
 
+## Deploy
+
+Not currently deployed. Running an LLM in the cloud needs either a GPU
+(for Ollama) or a switch to a paid API provider (`LLM_PROVIDER=anthropic`
+or `openai` in `.env`, with a spending cap on the key) — both have a real
+cost, so this is deliberately left as a documented path rather than
+something provisioned by default. Common routes: Azure Container Apps or
+AWS App Runner/ECS Fargate for the API, plus that cloud's managed
+PostgreSQL (both support pgvector). "Runs locally with one command" (see
+Quick start) stands in for a hosted demo for now.
+
 ## Running tests
 
 ```bash
