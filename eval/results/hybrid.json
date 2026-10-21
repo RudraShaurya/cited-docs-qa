@@ -1,0 +1,28 @@
+{
+  "mode": "hybrid",
+  "k": 5,
+  "generated_at": "2026-10-22T01:32:35",
+  "retrieval": {
+    "recall_at_k": 0.926829268292683,
+    "k": 5,
+    "mrr_at_k": 0.8481547619047619,
+    "mrr_k": 10,
+    "answerable_questions": 40,
+    "total_gold_items": 41
+  },
+  "generation": {
+    "unanswerable_questions": 9,
+    "correct_refusal_rate": 1.0,
+    "answerable_questions": 40,
+    "wrong_refusal_rate": 0.025,
+    "latency_ms": {
+      "retrieve_p50": 15.99999999962165,
+      "retrieve_p95": 32.00000000288128,
+      "generate_p50": 3405.9999999990396,
+      "generate_p95": 4109.000000000378,
+      "total_p50": 3422.000000002299,
+      "total_p95": 4125.0
+    },
+    "model": "llama3.1:8b"
+  }
+}

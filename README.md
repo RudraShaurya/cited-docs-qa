@@ -1,5 +1,7 @@
 # Cited Document Q&A (RAG)
 
+[![CI](https://github.com/RudraShaurya/cited-docs-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/RudraShaurya/cited-docs-qa/actions/workflows/ci.yml)
+
 Ask questions about a set of uploaded documents and get an answer that cites
 the exact page it came from — or a plain refusal when the documents don't
 cover the question.

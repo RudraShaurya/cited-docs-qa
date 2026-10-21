@@ -1,0 +1,28 @@
+{
+  "mode": "keyword",
+  "k": 5,
+  "generated_at": "2026-10-22T01:30:44",
+  "retrieval": {
+    "recall_at_k": 0.2926829268292683,
+    "k": 5,
+    "mrr_at_k": 0.2833333333333333,
+    "mrr_k": 10,
+    "answerable_questions": 40,
+    "total_gold_items": 41
+  },
+  "generation": {
+    "unanswerable_questions": 9,
+    "correct_refusal_rate": 1.0,
+    "answerable_questions": 40,
+    "wrong_refusal_rate": 0.7,
+    "latency_ms": {
+      "retrieve_p50": 0.0,
+      "retrieve_p95": 0.0,
+      "generate_p50": 0.0,
+      "generate_p95": 3844.0000000009604,
+      "total_p50": 0.0,
+      "total_p95": 3844.0000000009604
+    },
+    "model": "llama3.1:8b"
+  }
+}

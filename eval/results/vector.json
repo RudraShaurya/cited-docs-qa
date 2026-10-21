@@ -1,0 +1,28 @@
+{
+  "mode": "vector",
+  "k": 5,
+  "generated_at": "2026-10-22T01:20:23",
+  "retrieval": {
+    "recall_at_k": 0.9024390243902439,
+    "k": 5,
+    "mrr_at_k": 0.8273214285714285,
+    "mrr_k": 10,
+    "answerable_questions": 40,
+    "total_gold_items": 41
+  },
+  "generation": {
+    "unanswerable_questions": 9,
+    "correct_refusal_rate": 1.0,
+    "answerable_questions": 40,
+    "wrong_refusal_rate": 0.025,
+    "latency_ms": {
+      "retrieve_p50": 15.99999999962165,
+      "retrieve_p95": 31.9999999992433,
+      "generate_p50": 3453.000000001339,
+      "generate_p95": 4109.000000000378,
+      "total_p50": 3469.0000000009604,
+      "total_p95": 4125.0
+    },
+    "model": "llama3.1:8b"
+  }
+}

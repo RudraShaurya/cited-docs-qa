@@ -10,10 +10,6 @@ env/
 
 .env
 
-eval/results/*.json
-eval/results/*.md
-!eval/results/.gitkeep
-
 *.egg-info/
 dist/
 build/
