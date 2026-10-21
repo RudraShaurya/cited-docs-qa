@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 from app.answer import AnswerResult, answer_question
@@ -16,6 +17,7 @@ from app.retrieval.embed import backfill_missing_embeddings
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 UPLOAD_DIR = Path("/tmp/cited-docs-qa-uploads")
+STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 
 @asynccontextmanager
@@ -26,6 +28,11 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(title="Cited Document Q&A", lifespan=lifespan)
+
+
+@app.get("/", include_in_schema=False)
+def ui():
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 class AskRequest(BaseModel):

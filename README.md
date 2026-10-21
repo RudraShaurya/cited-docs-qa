@@ -100,7 +100,9 @@ uv run python -m app.ingest data/raw
 uv run uvicorn app.api:app --reload
 ```
 
-Then open `http://localhost:8000/docs` for the interactive API, or:
+Then open `http://localhost:8000` for the web UI (question box, cited answer
+with clickable `[S#]` markers, and the indexed-document list), or
+`http://localhost:8000/docs` for the interactive API, or:
 
 ```bash
 curl -X POST http://localhost:8000/ask \

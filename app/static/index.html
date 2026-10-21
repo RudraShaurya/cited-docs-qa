@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Cited Document Q&A</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --border: #d0d0d0;
+    --muted: #666;
+    --accent: #2b5fb8;
+    --bg-soft: #f4f6f8;
+    --refuse: #8a3b2a;
+    --refuse-bg: #fbeae6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    max-width: 820px;
+    margin: 2rem auto;
+    padding: 0 1.25rem 3rem;
+    line-height: 1.5;
+    color: #1a1a1a;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--muted); margin-top: 0; margin-bottom: 1.5rem; font-size: 0.95rem; }
+
+  .ask-form { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+  textarea {
+    width: 100%; min-height: 4.5rem; padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border); border-radius: 6px; font-size: 1rem;
+    font-family: inherit; resize: vertical;
+  }
+  .ask-row { display: flex; gap: 0.6rem; align-items: center; }
+  select {
+    padding: 0.45rem 0.6rem; border: 1px solid var(--border); border-radius: 6px;
+    font-size: 0.9rem; background: white;
+  }
+  button {
+    padding: 0.5rem 1.1rem; border: none; border-radius: 6px;
+    background: var(--accent); color: white; font-size: 0.95rem; cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button:hover:not(:disabled) { filter: brightness(1.08); }
+
+  .result { margin-top: 1rem; }
+  .answer-box {
+    padding: 1rem 1.1rem; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-soft); white-space: pre-wrap;
+  }
+  .answer-box.refused { border-color: var(--refuse); background: var(--refuse-bg); color: var(--refuse); }
+  .cite-marker {
+    display: inline-block; cursor: pointer; font-weight: 600; color: var(--accent);
+    padding: 0 2px; border-bottom: 1px dashed var(--accent);
+  }
+  .citations { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .citation {
+    border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.75rem;
+    font-size: 0.88rem; display: none;
+  }
+  .citation.open { display: block; }
+  .citation .meta { color: var(--muted); font-size: 0.8rem; margin-bottom: 0.3rem; }
+  .meta-row { margin-top: 0.6rem; font-size: 0.82rem; color: var(--muted); }
+
+  .doc-list { margin-top: 2.5rem; border-top: 1px solid var(--border); padding-top: 1.2rem; }
+  .doc-list h2 { font-size: 1.05rem; margin-bottom: 0.6rem; }
+  .doc-row {
+    display: flex; justify-content: space-between; padding: 0.35rem 0;
+    border-bottom: 1px solid #eee; font-size: 0.9rem;
+  }
+  .doc-row .count { color: var(--muted); }
+  .empty-state { color: var(--muted); font-style: italic; }
+  .spinner { color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <h1>Cited Document Q&amp;A</h1>
+  <p class="subtitle">
+    Answers are generated only from the documents below, with a page
+    citation for every claim. If the documents don't cover a question,
+    the system says so instead of guessing.
+  </p>
+
+  <form class="ask-form" id="ask-form">
+    <textarea id="question" placeholder="e.g. How much long service leave am I entitled to?" required></textarea>
+    <div class="ask-row">
+      <select id="mode">
+        <option value="hybrid" selected>Hybrid (recommended)</option>
+        <option value="vector">Vector only</option>
+        <option value="keyword">Keyword only</option>
+      </select>
+      <button type="submit" id="submit-btn">Ask</button>
+    </div>
+  </form>
+
+  <div class="result" id="result"></div>
+
+  <div class="doc-list">
+    <h2>Indexed documents</h2>
+    <div id="doc-list-body"><p class="empty-state">Loading…</p></div>
+  </div>
+
+<script>
+const form = document.getElementById('ask-form');
+const questionEl = document.getElementById('question');
+const modeEl = document.getElementById('mode');
+const resultEl = document.getElementById('result');
+const submitBtn = document.getElementById('submit-btn');
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function renderAnswer(data) {
+  resultEl.innerHTML = '';
+
+  const box = document.createElement('div');
+  box.className = 'answer-box' + (data.refused ? ' refused' : '');
+
+  let answerHtml = escapeHtml(data.answer);
+  if (!data.refused && data.citations.length) {
+    answerHtml = answerHtml.replace(/\[S(\d+)\]/g, (match, num) => {
+      const found = data.citations.some(c => String(c.marker) === num);
+      return found
+        ? `<span class="cite-marker" data-marker="${num}">${match}</span>`
+        : match;
+    });
+  }
+  box.innerHTML = answerHtml;
+  resultEl.appendChild(box);
+
+  if (!data.refused && data.citations.length) {
+    const citeContainer = document.createElement('div');
+    citeContainer.className = 'citations';
+
+    data.citations.forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'citation';
+      div.id = `citation-${c.marker}`;
+      const pageInfo = c.page ? `, page ${c.page}` : '';
+      div.innerHTML = `
+        <div class="meta">[S${c.marker}] ${escapeHtml(c.title)}${pageInfo}</div>
+        <div>${escapeHtml(c.snippet)}</div>
+      `;
+      citeContainer.appendChild(div);
+    });
+
+    resultEl.appendChild(citeContainer);
+
+    box.querySelectorAll('.cite-marker').forEach(el => {
+      el.addEventListener('click', () => {
+        const target = document.getElementById(`citation-${el.dataset.marker}`);
+        if (target) {
+          const wasOpen = target.classList.contains('open');
+          citeContainer.querySelectorAll('.citation').forEach(c => c.classList.remove('open'));
+          if (!wasOpen) {
+            target.classList.add('open');
+            target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      });
+    });
+  }
+
+  const meta = document.createElement('div');
+  meta.className = 'meta-row';
+  const t = data.timings_ms || {};
+  meta.textContent = `model: ${data.model || 'unknown'} · retrieve ${Math.round(t.retrieve || 0)}ms · generate ${Math.round(t.generate || 0)}ms`;
+  resultEl.appendChild(meta);
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const question = questionEl.value.trim();
+  if (!question) return;
+
+  submitBtn.disabled = true;
+  resultEl.innerHTML = '<p class="spinner">Thinking…</p>';
+
+  try {
+    const response = await fetch('/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question, mode: modeEl.value }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.detail || `Request failed (${response.status})`);
+    }
+    const data = await response.json();
+    renderAnswer(data);
+  } catch (err) {
+    resultEl.innerHTML = `<div class="answer-box refused">Something went wrong: ${escapeHtml(err.message)}</div>`;
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+
+async function loadDocuments() {
+  const body = document.getElementById('doc-list-body');
+  try {
+    const response = await fetch('/documents');
+    const docs = await response.json();
+    if (!docs.length) {
+      body.innerHTML = '<p class="empty-state">No documents indexed yet.</p>';
+      return;
+    }
+    body.innerHTML = docs
+      .map(d => `<div class="doc-row"><span>${escapeHtml(d.title)}</span><span class="count">${d.chunk_count} chunks</span></div>`)
+      .join('');
+  } catch {
+    body.innerHTML = '<p class="empty-state">Could not load document list.</p>';
+  }
+}
+
+loadDocuments();
+</script>
+</body>
+</html>

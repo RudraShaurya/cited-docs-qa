@@ -19,6 +19,13 @@ def client(clean_db, monkeypatch):
         yield test_client
 
 
+def test_ui_served_at_root(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "text/html" in response.headers["content-type"]
+    assert "Cited Document Q&A" in response.text
+
+
 def test_health(client):
     response = client.get("/health")
     assert response.status_code == 200
